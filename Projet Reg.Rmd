@@ -44,8 +44,7 @@ str(data_hour)
 # Prétraitement des données
 
 
-Comme tout projet de Data, il est essentiel de passer au préalabe à l'étape de pretraitement pour voir si notre jeu de donnée contient des valeurs manquantes ou abberante afin de les traiter pour ne pas avoir une analyse biaisé. 
-On a fait recours à la fonction sum(is.na) 
+
 
 ```{r}
 # Valeur manquante
@@ -54,10 +53,7 @@ colSums(is.na(data_day))
 ```
 
 ### Transformation des variables
-La colonne dteday doit être convertie en format date, et l'heure doit être interprétée comme un facteur pour les analyses horaires
 
-
-Convertir les variables en facteurs est essentiel parcequ'on prevoit de les utiliser dans des modèles de régression, des visualisations, ou d'autres analyses qui tiennent compte de la nature catégorielle des données.
 
 ```{r}
 data_day$dteday = as.Date(data_day$dteday)
@@ -111,7 +107,6 @@ ggplot(data_hour, aes(x = hr, y = cnt)) +
   theme_minimal()
 ```
 
-Nous pouvons remarquer une monté en flèche des locations de velos dans les heures de pointe comme 8h, 17h et 18h
 
 
 
@@ -131,8 +126,7 @@ corrplot(matrice_cor, method = "color", type = "upper",
          tl.col = "black", tl.srt = 45, addCoef.col = "black", 
          number.cex = 0.7, number.digits = 2)
 ```
-On remarque une forte corrélation positive entre cnt et temp(une augmentation de la température implique également une augmentation des locations du vélo). Cela nous prouve que les gens ont tendance à louer le velos sous une forte température.
-Par contre, une corrélation négative entre cnt et hum est constaté. Une forte humidité entraine une baisse des locations de vélos.
+
 
 
 
@@ -154,8 +148,7 @@ boxplot(data_day$cnt ~ data_day$season, main= "Nbr de locations par Saison", xla
 
 boxplot(data_day$cnt ~ data_day$holiday, main= "Nbr de locations par jour ferié ou non",xlab=" jour ferié ou non ",ylab = "Nbrlocations", col= "orange")
 ```
-On remarque dans la boxplot que le nombre de locations de vélos est généralement plus élevé et plus concentré en automne et en été plutôt qu'en printemps et hivers, bien que quelques jours de printemps montrent des pics dans les locations.
-Les vélos semblent être loués de manière similaire, indépendamment du fait que la journée soit fériée ou non. Il n'y a donc pas de différence évidente.
+
 
 
 
@@ -177,7 +170,7 @@ ggplot(seasonal_trends, aes(x = season, y = mean_cnt, fill = season)) +
   theme_minimal()
 
 ```
-Même interpretation que le boxplot précedente 
+
 
 
 ```{r}
@@ -188,8 +181,6 @@ ggplot(data_day, aes(x=temp, y=cnt)) +
   labs(title="Relation entre la température et le nombre de locations", x="Température normalisée", y="Nombre de locations") +
   theme_minimal()
 ```
-
-Nous pouvons constater une corrélation positive entre température et nombre de locations. La droite rouge représente une tendance linéaire positive. Cela signifie que plus la température augmente, plus le nombre de locations de vélos tend à croître.Cela suggère que les gens préfèrent utiliser les vélos lorsque la température est plus élevée, ce qui est logique, car la chaleur peut encourager l'utilisation des vélos pour les déplacements ou les loisirs.
 
 
 ```{r}
@@ -211,10 +202,6 @@ ggplot(data_day, aes(x=mnth, y=cnt)) +
   theme_minimal()
 
 ```
-
-Le boxplot met en évidence une tendance saisonnière marquée dans le nombre de locations de vélos : 
-Il y a une augmentation des locations durant les mois d'été (juin à septembre), avec un pic en août et septembre.
-L'hiver (janvier, février, décembre) voit un nombre beaucoup plus faible de locations, probablement en raison des conditions climatiques défavorables.
 
 
 
@@ -241,8 +228,8 @@ Les modèles les plus appropriés pour des données de comptage sont:
 
 
 
-###### Diviser le jeu de donnée en 2
-Pour diviser mon jeu de données en ensembles de donnée d'entraînement et de test, j'ai fait recours au packages caTools. L'idée est de diviser mon jeu de données de manière aléatoire pour obtenir un sous-ensemble que nous utiliserons pour ajuster notre modèle et un autre pour évaluer la performance du modèle.
+###### Diviser le jeu de donnée en ensembles de donnée d'entraînement et de test
+
 
 ```{r}
 #install.packages("caTools")
@@ -267,8 +254,6 @@ test_data = subset(data_day, split == FALSE)
 
 ### Modèle de Poisson de base
 
-La régression de Poisson suppose que la variable dépendante suit une distribution de Poisson, c'est-à-dire que la moyenne et la variance sont égales.
-La fonction de lien est logarithmique, ce qui permet de modéliser une relation non linéaire entre les variables explicatives et la variable dépendante.
 
 ```{r}
 poisson_model = glm(cnt ~ temp + atemp + hum + windspeed + season + yr + mnth + weekday + holiday , 
@@ -280,20 +265,20 @@ summary(poisson_model)
 
 
 
-Verification de la dispersion avec la fonction dispersiontest()
+
 ```{r}
+# Verification de la dispersion avec la fonction dispersiontest()
 library(AER)
 
 # Test de surdispersion
 dispersiontest(poisson_model)
 
 ```
-le test est significatif (p-value < 0.05), cela suggère qu'il y a une surdispersion dans les données.
 
 
-Vérification de la distribution  avec le ratio variance/moyenne
+
 ```{r}
-
+# Vérification de la distribution  avec le ratio variance/moyenne
 mean_cnt = mean(data_day$cnt)
 var_cnt = var(data_day$cnt)
 
@@ -303,9 +288,6 @@ var_cnt   # Variance
 # Vérification du ratio variance / moyenne
 var_cnt / mean_cnt
 ```
-
-Nous pouvons remarquer que la ratio variance/moyenne est supérieur à 1, alors les données montrent de la surdispersion.
-
 
 
 
@@ -336,15 +318,6 @@ nb_model_train = glm.nb(cnt ~  + atemp + hum + windspeed + season + yr + mnth + 
 ```{r}
 summary(nb_model_train)
 ```
-
-Température ressentie (atemp) (1.94819, p < 2e-16) : Une augmentation d'une unité de la température ressentie entraîne une augmentation d'environ 1.948 unités en logarithme du nombre de locations. Ce coefficient est hautement significatif, ce qui suggère que la température ressentie a un fort impact positif sur la demande de vélos.
-
-Humidité (hum) (-0.83266, p < 2e-16) : Une augmentation de l'humidité entraîne une diminution du nombre de locations. Ce coefficient est négatif et très significatif, indiquant qu'une forte humidité décourage les utilisateurs de louer des vélos.
-
-Vitesse du vent (windspeed) (-0.88981, p = 6.79e-09) : De même, une augmentation de la vitesse du vent est associée à une diminution significative des locations de vélos.
-
-Le modèle montre que des facteurs comme la température ressentie, l'humidité, la vitesse du vent, et la saison ont un impact significatif sur le nombre de locations de vélos. L'effet de l'année (croissance d'une année à l'autre) et des jours fériés sont également marquants. Ce modèle fournit une bonne base pour prédire la demande de vélos et peut aider l'entreprise à ajuster ses stratégies, comme la répartition des vélos ou l'optimisation des prix, en fonction des conditions météorologiques et des saisons.
-
 
 
 
@@ -391,10 +364,7 @@ lrtest = lmtest::lrtest(poisson_model, nb_model_train)
 lrtest
 
 ```
-Le modèle binomial négatif a une log-vraisemblance bien plus élevée (-4889) que celle du modèle de poisson, cela signifie qu'il s'ajuste beaucoup mieux aux données que le modèle de Poisson.
 
-La p-value (< 2.2e-16) est extrêmement inférieur  à 0,05, Cela indique le modèle binomial est significativement meilleur que le modèle de Poisson  pour ajuster les données. Cela est probablement dû à la surdispersion observée dans vos données (variance plus grande que la moyenne), que le modèle de Poisson ne prend pas en compte, tandis que le modèle binomial négatif, lui, le fait.
-En se basant sur le test, nous devrions donc privilégier le modèle binomial négatif (nb_model) pour vos prédictions, car il s'ajuste bien mieux aux données que le modèle de Poisson.
 
 
 ```{r}
@@ -404,32 +374,21 @@ lrtest = lmtest::lrtest(gam_model, nb_model_train)
 # Afficher les résultats du test du rapport de vraisemblance
 lrtest
 ```
-Avec une p-value(2.2e-16) < 0,005, nous pouvons également conclue que le modèle binomial est significativement meilleur que le modèle GAM
 
 
 
 
-
-
-
-### ○	Évaluer la qualité du modèle final et interpréter les résultats
-Le modèle final est celui du modèle binomial négatif
 
 ###### Verification de l'hyphothèse de multiconéarité
 
-Pour évaluer la colinéarité, nous allons vérifier les VIF (Variance Inflation Factor) pour chaque variable dans le modèle ajusté. Ces valeurs permettent de détecter la multicolinéarité, c'est-à-dire des relations linéaires fortes entre les variables explicatives, qui peuvent poser problème dans les modèles de régression.
 
 ```{r}
 library("car")
 vif(nb_model_train)
 
 ```
-Nous pouvons remarquer q'il n'y a pas de problème significatif de multicolinéarité dans notre modèle, et que toutes les variables peuvent être conservées.
 
 
-
-
-Après avoir ajusté le modèle, nous allons passer par la préduction sur l'ensemble de test et ensuite évaluer sa performance en utilisant l'ensemble de test avec rmse test.
 
 ```{r}
 # Prédictions sur l'ensemble de test
@@ -444,19 +403,6 @@ print(paste("RMSE sur l'ensemble de test:", rmse_test))
 ```{r}
 mean(data_day$cnt)
 ```
-La valeur du RMSE que nous avons obtenue est 1095.85. Cela signifie qu'en moyenne, l'erreur ou l'écart entre les prédictions de notre modèle et les valeurs réelles des locations de vélos est d'environ 1096 locations par jour.
-
-Le RMSE de 1095.85 qui représente 24% de la moyenn montre que le modèle est capable de prédire avec une erreur moyenne qui est relativement proportionnelle à la moyenne réelle des locations.
-
-Il est cependant possible d'améliorer la précision du modèle, notamment en testant d'autres variables,ou en explorant plus en détail la temporalité et les saisonnalités présentes dans les données.
-
-En résumé, notre modèle est globalement fonctionnel, mais pourrait encore bénéficier de quelques a
-
-Pour réduire l'erreur de prédiction dans notre modèle,nous pouvons faire recours à des  stratégies comme feature engineering, tester d'autres modèles de régression etc. visant à améliorer les performances du modèle et à réduire le RMSE.
-
-
-
-
 
 
 
@@ -490,39 +436,11 @@ new_data=data.frame(
 
 
 ```{r}
+# Préduction
 predictions = predict(nb_model_train, newdata = new_data, type = "response")
 
 print(predictions)
 
 ```
-
-
-Les résultats de notre prédictions avec le modèle ajusté nb_model_train donnent les valeurs suivantes pour la demande de vélos :
-
-
-Condition 1 pour Eté comme saison avec ( atemp = 0.35, hum = 0.6, windspeed = 0.2, etc.) on a eu 4063.286 locations de vélos
-Condition 2 pour Hyver comme saison avec( atemp = 0.25, hum = 0.8, windspeed = 0.3, etc.) on a eu 3360.433 locations de vélos
-Condition 3 pour Printemps comme saison avec ( atemp = 0.15, hum = 0.4, windspeed = 0.1, etc.) on a eu 1796.387 locations de vélos
-
-Aolrs à travers le resultat de notre préduction, nous pouvons vraiment remarquer l'impact de la saison sur la location.
-
-
-  - En Été, la prédiction de 4063.286 locations est la plus élevée, ce qui évident que la demande de vélos soit plus forte parceque c'est la saison estivale. Les températures plus élevées et les conditions climatiques plus favorables incitent généralement les gens à participé à des activités de plein air.
-  
-  - En Hiver, la demande prédit à 3360.433 locations est également élevée, mais inférieure à celle de l'été. Cela peut être dû aux conditions climatiques moins favorables à cause de la fraîcheur, même si certains usagers continuent à utiliser des vélos.
-  
-  - En Printemps, la prévision de 1796.387 locations est la plus basse. Cela peut être contre-intuitif, car le printemps est souvent associé à un renouveau et à des activités de plein air. Cependant, il est possible que d'autres facteurs (comme la météo printanière encore variable) influencent négativement l'utilisation des vélos à cette période.
-
-
-
-###### Recommandation
-
-A l'aide de la préduction de notre model, nous pouvons contribuer à la prise à l'aide de décision de l'entreprise.
-Elle peut s'appuyer à la mise en œuvre de campagnes promotionnelles. Étant donné que la demande de vélos est la plus élevée en été, il serait mieux de proliferer les campagnes marketing durant cette période pour maximiser les locations.
-
-L'entreprise doit aussi penser à mettre en Offres spéciales pour le printemps, c'est à dire envisager des promotions ou des événements pour encourager l'utilisation des vélos durant cette période, en mettant l'accent sur les avantages d'utiliser des vélos pour se déplacer dans un climat printanier.
-
-Il faut aussi noté qu'il est crucial de continuer à surveiller les conditions climatiques et leurs impacts sur la demande pour ajuster les offres et les stratégies de marketing.
-
 
 
