@@ -3,9 +3,9 @@ title: "statRregression_IA-M1DA2"
 author: "Hady COULIBALY"
 date: "2024-09-29"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
   word_document: default
 ---
 
